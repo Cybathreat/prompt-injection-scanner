@@ -1,0 +1,50 @@
+# Prompt Injection Scanner Configuration
+# Example config file for customizing scan behavior
+
+scanner:
+  # HTTP request timeout in seconds
+  timeout: 30
+  
+  # Number of concurrent requests (max parallelism)
+  concurrent_requests: 10
+  
+  # Delay between requests in seconds (rate limiting)
+  rate_limit_delay: 0.1
+  
+  # User-Agent strings to rotate through
+  user_agents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"
+  
+  # Maximum HTTP redirects to follow
+  max_redirects: 5
+  
+  # Verify SSL certificates
+  verify_ssl: true
+
+attacks:
+  # Enable/disable specific attack patterns by ID
+  # IDs: 1-10 (all OWASP Top 10 patterns)
+  enabled:
+    - 1  # Direct Injection
+    - 2  # Jailbreak
+    - 3  # Data Exfiltration
+    - 4  # Privilege Escalation
+    - 5  # Malware Generation
+    - 6  # Phishing
+    - 7  # Bias Exploitation
+    - 8  # Hallucination
+    - 9  # Context Stuffing
+    - 10 # Multi-Turn Escalation
+
+output:
+  # Enable verbose output
+  verbose: false
+  
+  # Generate JSON report
+  json_report: false
+  
+  # Generate PDF report (requires report.py)
+  pdf_report: false
