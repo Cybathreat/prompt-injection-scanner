@@ -252,17 +252,33 @@ class Scanner:
 @click.command()
 @click.option('--target', '-t', required=True, help='Target URL to scan')
 @click.option('--config', '-c', default=None, help='Path to config.yaml')
+@click.option('--output', '-o', default='./reports', help='Output directory for reports')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-@click.option('--json', 'json_output', is_flag=True, help='Output results as JSON')
-def main(target: str, config: Optional[str], verbose: bool, json_output: bool):
+@click.option('--json-report', is_flag=True, help='Generate JSON report')
+@click.option('--pdf-report', is_flag=True, help='Generate PDF report (requires reportlab)')
+@click.option('--format', 'report_format', default='both', type=click.Choice(['json', 'pdf', 'both']), help='Report format')
+def main(target: str, config: Optional[str], output: str, verbose: bool, 
+         json_report: bool, pdf_report: bool, report_format: str):
     """
     Prompt Injection Scanner - HTTP Fuzzer Engine
     
     Scan LLM endpoints for OWASP Top 10 prompt injection vulnerabilities.
     
-    Example:
+    Examples:
         python scanner.py --target https://httpbin.org/post
+        python scanner.py -t https://api.example.com/llm -o ./output --pdf-report
+        python scanner.py -t https://api.example.com/llm --format json --verbose
     """
+    # Determine report format
+    if json_report and pdf_report:
+        fmt = "both"
+    elif json_report:
+        fmt = "json"
+    elif pdf_report:
+        fmt = "pdf"
+    else:
+        fmt = report_format
+    
     # Load config
     cfg = Config(config)
     if verbose:
@@ -273,8 +289,29 @@ def main(target: str, config: Optional[str], verbose: bool, json_output: bool):
             await scanner.scan()
             scanner.print_results()
             
-            if json_output:
-                click.echo("\n" + json.dumps(scanner.get_findings(), indent=2))
+            # Generate reports if requested
+            if fmt != "none":
+                try:
+                    from reporter import generate_reports
+                    
+                    click.echo(f"\n📁 Generating reports in: {output}")
+                    generated = generate_reports(
+                        target=target,
+                        results=scanner.results,
+                        output_dir=output,
+                        format=fmt,
+                        config=cfg.config
+                    )
+                    
+                    if "json" in generated:
+                        click.echo(f"✅ JSON report: {generated['json']}")
+                    if "pdf" in generated:
+                        click.echo(f"✅ PDF report: {generated['pdf']}")
+                    if "pdf_error" in generated:
+                        click.echo(f"⚠️  PDF skipped: {generated['pdf_error']}")
+                        
+                except Exception as e:
+                    click.echo(f"⚠️  Report generation failed: {e}")
             
             # Return exit code based on findings
             vulns = len([r for r in scanner.results if r.success])
