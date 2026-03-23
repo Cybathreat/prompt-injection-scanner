@@ -211,9 +211,17 @@ class TestReportGeneration:
         assert data["summary"]["vulnerabilities_found"] == 1
         assert len(data["results"]) == 1
     
-    def test_pdf_report_requires_reportlab(self, tmp_path):
+    def test_pdf_report_requires_reportlab(self, tmp_path, monkeypatch):
         """Test PDF generation handles missing reportlab."""
         from reporter import ReportGenerator
+        
+        # Mock reportlab import to fail
+        def mock_import(name, *args, **kwargs):
+            if name == 'reportlab':
+                raise ImportError("No module named 'reportlab'")
+            return __builtins__['__import__'](name, *args, **kwargs)
+        
+        monkeypatch.setattr('builtins.__import__', mock_import)
         
         results = [
             AttackResult(
@@ -232,7 +240,7 @@ class TestReportGeneration:
         generator = ReportGenerator(str(tmp_path))
         
         # Should raise ImportError if reportlab not installed
-        with pytest.raises(ImportError):
+        with pytest.raises(ImportError, match="reportlab is required for PDF generation"):
             generator.generate_pdf_report("https://example.com", results)
 
 
